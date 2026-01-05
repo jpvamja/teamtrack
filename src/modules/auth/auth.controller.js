@@ -1,6 +1,7 @@
+import { response } from "express";
 import ApiError from "../../utils/apiError.js";
 import ApiResponse from "../../utils/apiResponse.js";
-import { registerUser, loginUser } from "./auth.service.js";
+import { registerUser, loginUser, refreshAccessToken } from "./auth.service.js";
 
 const register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -27,7 +28,19 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-    return ApiResponse.success(res, "Logout successful", 200);
+    return ApiResponse.success(res,null, "Logout successful", 200);
 };
 
-export { register, login, logout };
+const refresh = async (req, res)=>{
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+        throw ApiError.badRequest("Refresh token is required");
+    }
+
+    const result = await refreshAccessToken(refreshToken);
+
+    return ApiResponse.success(response, result, "Access token refreshed", 200);
+};
+
+export { register, login, logout, refresh };

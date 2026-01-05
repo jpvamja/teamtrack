@@ -52,4 +52,29 @@ const loginUser = async ({ email, password }) => {
     };
 };
 
-export { registerUser, loginUser };
+const refreshAccessToken = async(refreshToken)=>{
+    if (!refreshToken) {
+        throw ApiError.badRequest("Refresh token is required");
+    }
+
+    let decoded;
+
+    try {
+        decoded = verifyToken(refreshToken);
+    } catch (error) {
+        throw ApiError.unauthorized("Invalid or expired refresh token");
+    }
+
+    const payload = {
+        userId: decoded.userId,
+        role: decoded.role,
+    };
+
+    const newAccessToken = signAccessToken(payload);
+
+    return {
+        accessToken: newAccessToken,
+    };
+}
+
+export { registerUser, loginUser, refreshAccessToken };
