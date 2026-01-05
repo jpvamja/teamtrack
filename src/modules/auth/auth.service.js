@@ -1,5 +1,6 @@
 import User from "../user/user.model.js";
 import ApiError from "../../utils/apiError.js";
+import { verifyToken } from "../../utils/jwt.js";
 import { signAccessToken, signRefreshToken } from "../../utils/jwt.js";
 
 const registerUser = async ({ name, email, password }) => {
@@ -40,7 +41,7 @@ const loginUser = async ({ email, password }) => {
     };
 
     const accessToken = signAccessToken(payload);
-    const refreshtoken = signRefreshToken(payload);
+    const refreshToken = signRefreshToken(payload);
 
     const userObj = user.toObject();
     delete userObj.password;
@@ -48,7 +49,7 @@ const loginUser = async ({ email, password }) => {
     return {
         user: userObj,
         accessToken,
-        refreshtoken,
+        refreshToken,
     };
 };
 

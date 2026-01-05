@@ -1,4 +1,3 @@
-import { response } from "express";
 import ApiError from "../../utils/apiError.js";
 import ApiResponse from "../../utils/apiResponse.js";
 import { registerUser, loginUser, refreshAccessToken } from "./auth.service.js";
@@ -40,7 +39,7 @@ const refresh = async (req, res)=>{
 
     const result = await refreshAccessToken(refreshToken);
 
-    return ApiResponse.success(response, result, "Access token refreshed", 200);
+    return ApiResponse.success(res, result, "Access token refreshed", 200);
 };
 
 export { register, login, logout, refresh };
