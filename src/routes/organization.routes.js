@@ -1,29 +1,35 @@
-import mongoose from "mongoose";
+import express from "express";
+import asyncHandler from "../utils/asyncHandler.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+import authorizeRoles from "../middlewares/role.middleware.js";
+import ROLES from "../config/roles.js";
 
-const organizationSchema = new mongoose.Schema(
-    {
-        name: {
-            type: String,
-            required: [true, "Organization name is required"],
-            trim: true,
-        },
-        owner: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-        members: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "User",
-            },
-        ],
-    },
-    {
-        timestamps: true,
-    }
+import {
+    createOrg,
+    getOrgById,
+    inviteOrgMember,
+} from "../modules/organization/organization.controller.js";
+
+const router = express.Router();
+
+router.post(
+    "/",
+    authMiddleware,
+    authorizeRoles(ROLES.OWNER),
+    asyncHandler(createOrg)
 );
 
-const Organization = mongoose.model("Organization", organizationSchema);
+router.get(
+    "/:id",
+    authMiddleware,
+    asyncHandler(getOrgById)
+);
 
-export default Organization;
+router.post(
+    "/invite",
+    authMiddleware,
+    authorizeRoles(ROLES.OWNER, ROLES.ADMIN),
+    asyncHandler(inviteOrgMember)
+);
+
+export default router;
