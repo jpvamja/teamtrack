@@ -1,6 +1,6 @@
 import ApiError from "../../utils/apiError.js";
 import ApiResponse from "../../utils/apiResponse.js";
-import { registerUser } from "./auth.service.js";
+import { registerUser, loginUser } from "./auth.service.js";
 
 const register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -14,4 +14,16 @@ const register = async (req, res) => {
     return ApiResponse.created(res, user, "User registered successfully");
 };
 
-export { register };
+const login = async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        throw ApiError.badRequest("Email and password are required");
+    }
+
+    const result = await loginUser({ email, password });
+
+    return ApiResponse.success(res, result, "Login successful", 200);
+};
+
+export { register, login };
