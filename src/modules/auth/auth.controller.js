@@ -26,4 +26,8 @@ const login = async (req, res) => {
     return ApiResponse.success(res, result, "Login successful", 200);
 };
 
-export { register, login };
+const logout = async (req, res) => {
+    return ApiResponse.success(res, "Logout successful", 200);
+};
+
+export { register, login, logout };
