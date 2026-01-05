@@ -1,7 +1,6 @@
 import User from "../user/user.model.js";
 import ApiError from "../../utils/apiError.js";
-import { verifyToken } from "../../utils/jwt.js";
-import { signAccessToken, signRefreshToken } from "../../utils/jwt.js";
+import { signAccessToken, signRefreshToken, verifyToken } from "../../utils/jwt.js";
 
 const registerUser = async ({ name, email, password }) => {
     const existingUser = await User.findOne({ email });
@@ -53,7 +52,7 @@ const loginUser = async ({ email, password }) => {
     };
 };
 
-const refreshAccessToken = async(refreshToken)=>{
+const refreshAccessToken = async (refreshToken)=>{
     if (!refreshToken) {
         throw ApiError.badRequest("Refresh token is required");
     }
