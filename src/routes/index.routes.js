@@ -26,6 +26,6 @@ router.use("/auth", authRoutes);
 router.use("/test", testRoutes);
 router.use("/org", organizationRoutes);
 router.use("/projects", projectRoutes);
-router.user("/tasks", taskRoutes);
+router.use("/tasks", taskRoutes);
 
 export default router;
