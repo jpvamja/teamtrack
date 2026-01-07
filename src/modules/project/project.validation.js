@@ -1,25 +1,46 @@
 import Joi from "joi";
 
 /**
+ * Common MongoDB ObjectId validator
+ */
+const objectIdSchema = Joi.string()
+  .length(24)
+  .hex()
+  .required();
+
+/**
  * Create project validation
  */
 export const createProjectSchema = Joi.object({
-    name: Joi.string().min(2).max(100).required(),
-    description: Joi.string().max(500).allow("", null),
-    organizationId: Joi.string().required(),
+  name: Joi.string()
+    .min(2)
+    .max(100)
+    .trim()
+    .pattern(/^[a-zA-Z0-9\s-_]+$/)
+    .message("Project name contains invalid characters")
+    .required(),
+
+  description: Joi.string()
+    .max(500)
+    .trim()
+    .allow("", null),
+
+  organizationId: objectIdSchema,
 });
 
 /**
  * Get project by ID (params)
  */
 export const getProjectSchema = Joi.object({
-    id: Joi.string().required(),
+  projectId: objectIdSchema,
 });
 
 /**
  * List projects (query)
- * Optional filters for future scalability
  */
 export const listProjectsSchema = Joi.object({
-    organizationId: Joi.string().optional(),
+  organizationId: Joi.string()
+    .length(24)
+    .hex()
+    .optional(),
 });

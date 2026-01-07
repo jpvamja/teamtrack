@@ -2,69 +2,101 @@ import Organization from "./organization.model.js";
 import ApiError from "../../utils/apiError.js";
 import { isValidObjectId } from "../../utils/objectId.js";
 
+/**
+ * Create organization
+ */
 const createOrganization = async ({ name, userId }) => {
-    const organization = await Organization.create({
-        name,
-        owner: userId,
-        members: [userId], // owner is also a member
-    });
+  const organization = await Organization.create({
+    name,
+    owner: userId,
+  });
 
-    return organization;
+  return organization;
 };
 
+/**
+ * Get organization by ID (members only)
+ */
 const getOrganizationById = async ({ orgId, userId }) => {
-    if (!isValidObjectId(orgId)) {
-        throw ApiError.badRequest("Invalid organization ID");
-    }
+  if (!isValidObjectId(orgId)) {
+    throw ApiError.badRequest("Invalid organization ID");
+  }
 
-    const organization = await Organization.findById(orgId)
-        .populate("owner", "name email")
-        .populate("members", "name email");
+  const organization = await Organization.findById(orgId)
+    .populate("owner", "name email")
+    .populate("members.user", "name email")
+    .lean();
 
-    if (!organization) {
-        throw ApiError.notFound("Organization not found");
-    }
+  if (!organization) {
+    throw ApiError.notFound("Organization not found");
+  }
 
-    const isMember = organization.members.some(
-        (member) => member._id.toString() === userId
-    );
+  const isMember = organization.members.some(
+    (member) => member.user._id.toString() === userId
+  );
 
-    if (!isMember) {
-        throw ApiError.forbidden(
-            "You are not a member of this organization"
-        );
-    }
+  if (!isMember) {
+    throw ApiError.forbidden("You are not a member of this organization");
+  }
 
-    return organization;
+  return organization;
 };
 
-const inviteMember = async ({ orgId, userId }) => {
-    if (!isValidObjectId(orgId) || !isValidObjectId(userId)) {
-        throw ApiError.badRequest("Invalid ID provided");
-    }
+/**
+ * Invite member (OWNER / ADMIN only)
+ */
+const inviteMember = async ({
+  orgId,
+  invitedUserId,
+  requesterId,
+}) => {
+  if (
+    !isValidObjectId(orgId) ||
+    !isValidObjectId(invitedUserId)
+  ) {
+    throw ApiError.badRequest("Invalid ID provided");
+  }
 
-    const organization = await Organization.findById(orgId);
+  const organization = await Organization.findById(orgId);
 
-    if (!organization) {
-        throw ApiError.notFound("Organization not found");
-    }
+  if (!organization) {
+    throw ApiError.notFound("Organization not found");
+  }
 
-    const alreadyMember = organization.members.some(
-        (memberId) => memberId.toString() === userId
+  const requester = organization.members.find(
+    (member) => member.user.toString() === requesterId
+  );
+
+  if (!requester) {
+    throw ApiError.forbidden("You are not a member of this organization");
+  }
+
+  if (!["OWNER", "ADMIN"].includes(requester.role)) {
+    throw ApiError.forbidden(
+      "You do not have permission to invite members"
     );
+  }
 
-    if (alreadyMember) {
-        throw ApiError.badRequest("User already a member");
-    }
+  const alreadyMember = organization.members.some(
+    (member) => member.user.toString() === invitedUserId
+  );
 
-    organization.members.push(userId);
-    await organization.save();
+  if (alreadyMember) {
+    throw ApiError.badRequest("User already a member");
+  }
 
-    return organization;
+  organization.members.push({
+    user: invitedUserId,
+    role: "MEMBER",
+  });
+
+  await organization.save();
+
+  return organization;
 };
 
 export {
-    createOrganization,
-    getOrganizationById,
-    inviteMember,
+  createOrganization,
+  getOrganizationById,
+  inviteMember,
 };

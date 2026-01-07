@@ -9,53 +9,59 @@ const router = express.Router();
 /**
  * =========================
  * Test / Debug Routes
- * (Non-production business logic)
+ * ⚠️ DEVELOPMENT ONLY
  * =========================
  */
 
+if (process.env.NODE_ENV === "production") {
+  throw new Error("Test routes must not be loaded in production");
+}
+
 /**
  * Auth check
+ * Tests JWT + auth middleware only
  */
 router.get(
-    "/protected",
-    authMiddleware,
-    (req, res) => {
-        res.status(200).json({
-            success: true,
-            message: "Authenticated access",
-            data: req.user,
-        });
-    }
+  "/auth/protected",
+  authMiddleware,
+  (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: "Authenticated access",
+      data: req.user,
+    });
+  }
 );
 
 /**
- * Admin / Owner access check
+ * Global role check (DEBUG ONLY)
+ * ⚠️ Uses GLOBAL roles, not org/project roles
  */
 router.get(
-    "/admin-only",
-    authMiddleware,
-    authorizeRoles(ROLES.ADMIN, ROLES.OWNER),
-    (req, res) => {
-        res.status(200).json({
-            success: true,
-            message: "Admin access granted",
-        });
-    }
+  "/auth/admin-only",
+  authMiddleware,
+  authorizeRoles(ROLES.ADMIN, ROLES.OWNER),
+  (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: "Admin access granted (debug route)",
+    });
+  }
 );
 
 /**
- * Owner-only access check
+ * Owner-only global role check (DEBUG ONLY)
  */
 router.get(
-    "/owner-only",
-    authMiddleware,
-    authorizeRoles(ROLES.OWNER),
-    (req, res) => {
-        res.status(200).json({
-            success: true,
-            message: "Owner access granted",
-        });
-    }
+  "/auth/owner-only",
+  authMiddleware,
+  authorizeRoles(ROLES.OWNER),
+  (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: "Owner access granted (debug route)",
+    });
+  }
 );
 
 export default router;

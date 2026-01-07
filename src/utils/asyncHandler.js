@@ -3,9 +3,15 @@
  * Eliminates repetitive try/catch blocks in controllers
  */
 const asyncHandler = (handler) => {
-    return (req, res, next) => {
-        Promise.resolve(handler(req, res, next)).catch(next);
-    };
+  if (typeof handler !== "function") {
+    throw new TypeError(
+      "asyncHandler expects a function"
+    );
+  }
+
+  return function asyncWrappedHandler(req, res, next) {
+    Promise.resolve(handler(req, res, next)).catch(next);
+  };
 };
 
 export default asyncHandler;

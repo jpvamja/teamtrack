@@ -17,10 +17,10 @@ const router = express.Router();
  * =========================
  */
 router.get("/health", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Server is healthy",
-    });
+  res.status(200).json({
+    success: true,
+    message: "Server is healthy",
+  });
 });
 
 /**
@@ -29,10 +29,10 @@ router.get("/health", (req, res) => {
  * =========================
  */
 router.get("/me", authMiddleware, (req, res) => {
-    res.status(200).json({
-        success: true,
-        data: req.user,
-    });
+  res.status(200).json({
+    success: true,
+    data: req.user,
+  });
 });
 
 /**
@@ -40,11 +40,25 @@ router.get("/me", authMiddleware, (req, res) => {
  * Route Mounting
  * =========================
  */
+
+// Auth
 router.use("/auth", authRoutes);
-router.use("/test", testRoutes);
-router.use("/org", organizationRoutes);
+
+// Organizations
+router.use("/organizations", organizationRoutes);
+
+// Projects
 router.use("/projects", projectRoutes);
+
+// Tasks
 router.use("/tasks", taskRoutes);
-router.use("/comments", commentRoutes);
+
+// Comments (task-scoped routes inside)
+router.use("/", commentRoutes);
+
+// Test routes (DEV only)
+if (process.env.NODE_ENV !== "production") {
+  router.use("/test", testRoutes);
+}
 
 export default router;

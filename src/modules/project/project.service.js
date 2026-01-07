@@ -4,91 +4,110 @@ import ApiError from "../../utils/apiError.js";
 import { isValidObjectId } from "../../utils/objectId.js";
 
 /**
- * Create project
+ * Create project (ORG OWNER / ADMIN only)
  */
-const createProject = async ({ name, description, organizationId, userId }) => {
-    if (!isValidObjectId(organizationId)) {
-        throw ApiError.badRequest("Invalid organization ID");
-    }
+const createProject = async ({
+  name,
+  description,
+  organizationId,
+  userId,
+}) => {
+  if (!isValidObjectId(organizationId)) {
+    throw ApiError.badRequest("Invalid organization ID");
+  }
 
-    const organization = await Organization.findById(organizationId);
+  const organization = await Organization.findById(organizationId);
 
-    if (!organization) {
-        throw ApiError.notFound("Organization not found");
-    }
+  if (!organization) {
+    throw ApiError.notFound("Organization not found");
+  }
 
-    const isMember = organization.members?.some(
-        (memberId) => memberId.toString() === userId
+  const requester = organization.members.find(
+    (member) => member.user.toString() === userId
+  );
+
+  if (!requester) {
+    throw ApiError.forbidden(
+      "You are not a member of this organization"
     );
+  }
 
-    if (!isMember) {
-        throw ApiError.forbidden(
-            "You are not a member of this organization"
-        );
-    }
+  if (!["OWNER", "ADMIN"].includes(requester.role)) {
+    throw ApiError.forbidden(
+      "You do not have permission to create projects"
+    );
+  }
 
-    const project = await Project.create({
-        name,
-        description,
-        organization: organizationId,
-        createdBy: userId,
-    });
+  const project = await Project.create({
+    name,
+    description,
+    organization: organizationId,
+    createdBy: userId,
+  });
 
-    return project;
+  return project;
 };
 
 /**
- * Get project by ID
+ * Get project by ID (PROJECT MEMBER only)
  */
 const getProjectById = async ({ projectId, userId }) => {
-    if (!isValidObjectId(projectId)) {
-        throw ApiError.badRequest("Invalid project ID");
-    }
+  if (!isValidObjectId(projectId)) {
+    throw ApiError.badRequest("Invalid project ID");
+  }
 
-    const project = await Project.findById(projectId).populate("organization");
+  const project = await Project.findById(projectId)
+    .populate("organization")
+    .populate("members.user", "name email");
 
-    if (!project) {
-        throw ApiError.notFound("Project not found");
-    }
+  if (!project || project.status !== "ACTIVE") {
+    throw ApiError.notFound("Project not found");
+  }
 
-    const isMember = project.organization.members?.some(
-        (memberId) => memberId.toString() === userId
-    );
+  const isProjectMember = project.members.some(
+    (member) => member.user._id.toString() === userId
+  );
 
-    if (!isMember) {
-        throw ApiError.forbidden("Access denied");
-    }
+  if (!isProjectMember) {
+    throw ApiError.forbidden("Access denied");
+  }
 
-    return project;
+  return project;
 };
 
 /**
- * List projects by organization
+ * List projects by organization (ORG MEMBER only)
  */
-const listProjectsByOrg = async ({ organizationId, userId }) => {
-    if (!isValidObjectId(organizationId)) {
-        throw ApiError.badRequest("Invalid organization ID");
-    }
+const listProjectsByOrg = async ({
+  organizationId,
+  userId,
+}) => {
+  if (!isValidObjectId(organizationId)) {
+    throw ApiError.badRequest("Invalid organization ID");
+  }
 
-    const organization = await Organization.findById(organizationId);
+  const organization = await Organization.findById(organizationId);
 
-    if (!organization) {
-        throw ApiError.notFound("Organization not found");
-    }
+  if (!organization) {
+    throw ApiError.notFound("Organization not found");
+  }
 
-    const isMember = organization.members?.some(
-        (memberId) => memberId.toString() === userId
-    );
+  const isOrgMember = organization.members.some(
+    (member) => member.user.toString() === userId
+  );
 
-    if (!isMember) {
-        throw ApiError.forbidden("Access denied");
-    }
+  if (!isOrgMember) {
+    throw ApiError.forbidden("Access denied");
+  }
 
-    return Project.find({ organization: organizationId });
+  return Project.find({
+    organization: organizationId,
+    status: "ACTIVE",
+  }).lean();
 };
 
 export {
-    createProject,
-    getProjectById,
-    listProjectsByOrg,
+  createProject,
+  getProjectById,
+  listProjectsByOrg,
 };

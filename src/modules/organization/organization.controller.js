@@ -1,51 +1,66 @@
 import ApiResponse from "../../utils/apiResponse.js";
+import ApiError from "../../utils/apiError.js";
+
 import {
-    createOrganization,
-    getOrganizationById,
-    inviteMember,
+  createOrganization,
+  getOrganizationById,
+  inviteMember,
 } from "./organization.service.js";
 
-const createOrg = async (req, res) => {
-    const organization = await createOrganization({
-        name: req.body.name,
-        userId: req.user.userId,
-    });
+/**
+ * Create organization
+ */
+const createOrganizationController = async (req, res) => {
+  const organization = await createOrganization({
+    name: req.body.name,
+    userId: req.user.userId,
+  });
 
-    return ApiResponse.created(
-        res,
-        organization,
-        "Organization created successfully"
-    );
+  return ApiResponse.created(
+    res,
+    organization,
+    "Organization created successfully"
+  );
 };
 
-const getOrgById = async (req, res) => {
-    const organization = await getOrganizationById({
-        orgId: req.params.id,
-        userId: req.user.userId,
-    });
+/**
+ * Get organization by ID (member-only)
+ */
+const getOrganizationController = async (req, res) => {
+  const organization = await getOrganizationById({
+    orgId: req.params.orgId,
+    userId: req.user.userId,
+  });
 
-    return ApiResponse.success(
-        res,
-        organization,
-        "Organization fetched successfully"
-    );
+  return ApiResponse.success(
+    res,
+    organization,
+    "Organization fetched successfully"
+  );
 };
 
-const inviteOrgMember = async (req, res) => {
-    const organization = await inviteMember({
-        orgId: req.body.orgId,
-        userId: req.body.userId,
-    });
+/**
+ * Invite member to organization (OWNER / ADMIN only)
+ */
+const inviteOrganizationMemberController = async (req, res) => {
+  const { orgId } = req.params;
+  const { userId: invitedUserId } = req.body;
 
-    return ApiResponse.success(
-        res,
-        organization,
-        "Member added successfully"
-    );
+  const organization = await inviteMember({
+    orgId,
+    invitedUserId,
+    requesterId: req.user.userId,
+  });
+
+  return ApiResponse.success(
+    res,
+    organization,
+    "Member invited successfully"
+  );
 };
 
 export {
-    createOrg,
-    getOrgById,
-    inviteOrgMember,
+  createOrganizationController,
+  getOrganizationController,
+  inviteOrganizationMemberController,
 };

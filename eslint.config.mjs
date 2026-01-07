@@ -30,23 +30,27 @@ export default defineConfig([
     },
 
     rules: {
-      /* ===== Code quality ===== */
+      // ---------- Variables ----------
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-      "no-console": "off", // we use winston, but console in dev is OK
       "no-undef": "error",
 
-      /* ===== Async / Node ===== */
+      // ---------- Async correctness ----------
       "no-async-promise-executor": "error",
       "require-await": "warn",
+      "no-return-await": "warn",
 
-      /* ===== Style (Prettier-friendly) ===== */
+      // ---------- Style (matches Prettier) ----------
       "semi": ["error", "always"],
       "quotes": ["error", "double"],
       "indent": ["error", 4, { SwitchCase: 1 }],
 
-      /* ===== Safety ===== */
+      // ---------- Best practices ----------
       "eqeqeq": ["error", "always"],
       "curly": ["error", "all"],
+      "consistent-return": "error",
+
+      // ---------- Console ----------
+      "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
 ]);

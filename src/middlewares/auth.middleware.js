@@ -5,26 +5,34 @@ import { verifyToken } from "../utils/jwt.js";
  * Authentication middleware
  * Verifies JWT access token and attaches user payload to request
  */
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
+  try {
     const authHeader = req.headers.authorization;
 
-    // Check Authorization header
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return next(ApiError.unauthorized("Access token missing"));
+      throw ApiError.unauthorized("Unauthorized");
     }
 
     const token = authHeader.split(" ")[1];
 
-    try {
-        const decoded = verifyToken(token);
+    const decoded = verifyToken(token);
 
-        // Attach decoded token payload to request
-        req.user = decoded;
+    /**
+     * Attach decoded token payload
+     * Example payload: { userId, role }
+     */
+    req.user = decoded;
 
-        next();
-    } catch (error) {
-        return next(ApiError.unauthorized("Invalid or expired token"));
-    }
+    /**
+     * 🔐 Optional future hardening:
+     * - Fetch user from DB
+     * - Check isActive / token version
+     */
+
+    next();
+  } catch (error) {
+    next(ApiError.unauthorized("Unauthorized"));
+  }
 };
 
 export default authMiddleware;

@@ -1,85 +1,110 @@
 import User from "../user/user.model.js";
 import ApiError from "../../utils/apiError.js";
 import {
-    signAccessToken,
-    signRefreshToken,
-    verifyToken,
+  signAccessToken,
+  signRefreshToken,
+  verifyToken,
 } from "../../utils/jwt.js";
 
 /**
  * Register user
  */
 const registerUser = async ({ name, email, password }) => {
-    const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email });
 
-    if (existingUser) {
-        throw ApiError.badRequest("Email already registered");
-    }
+  if (existingUser) {
+    throw ApiError.badRequest("Email already registered");
+  }
 
-    const user = await User.create({
-        name,
-        email,
-        password,
-    });
+  const user = await User.create({
+    name,
+    email,
+    password,
+  });
 
-    const userObj = user.toObject();
-    delete userObj.password;
+  const userObj = user.toObject();
+  delete userObj.password;
 
-    return userObj;
+  return userObj;
 };
 
 /**
  * Login user
  */
 const loginUser = async ({ email, password }) => {
-    const user = await User.findOne({ email }).select("+password");
+  const user = await User.findOne({ email }).select("+password");
 
-    if (!user) {
-        throw ApiError.unauthorized("Invalid email or password");
-    }
+  if (!user) {
+    throw ApiError.unauthorized("Invalid email or password");
+  }
 
-    const isPasswordValid = await user.comparePassword(password);
+  const isPasswordValid = await user.comparePassword(password);
 
-    if (!isPasswordValid) {
-        throw ApiError.unauthorized("Invalid email or password");
-    }
+  if (!isPasswordValid) {
+    throw ApiError.unauthorized("Invalid email or password");
+  }
 
-    const payload = {
-        userId: user._id,
-        role: user.role,
-    };
+  const payload = {
+    userId: user._id,
+    role: user.role,
+  };
 
-    const accessToken = signAccessToken(payload);
-    const refreshToken = signRefreshToken(payload);
+  const accessToken = signAccessToken(payload);
+  const refreshToken = signRefreshToken(payload);
 
-    const userObj = user.toObject();
-    delete userObj.password;
+  // 🔐 Store refresh token (or hash) in DB
+  user.refreshToken = refreshToken;
+  await user.save({ validateBeforeSave: false });
 
-    return {
-        user: userObj,
-        accessToken,
-        refreshToken,
-    };
+  const userObj = user.toObject();
+  delete userObj.password;
+  delete userObj.refreshToken;
+
+  return {
+    user: userObj,
+    accessToken,
+    refreshToken,
+  };
 };
 
 /**
- * Refresh access token
+ * Refresh access token (with rotation)
  */
 const refreshAccessToken = async (refreshToken) => {
-    const decoded = verifyToken(refreshToken);
+  let decoded;
 
-    const payload = {
-        userId: decoded.userId,
-        role: decoded.role,
-    };
+  try {
+    decoded = verifyToken(refreshToken);
+  } catch (err) {
+    throw ApiError.unauthorized("Invalid refresh token");
+  }
 
-    return {
-        accessToken: signAccessToken(payload),
-    };
+  const user = await User.findById(decoded.userId);
+
+  if (!user || user.refreshToken !== refreshToken) {
+    throw ApiError.unauthorized("Refresh token revoked");
+  }
+
+  const payload = {
+    userId: user._id,
+    role: user.role,
+  };
+
+  const newAccessToken = signAccessToken(payload);
+  const newRefreshToken = signRefreshToken(payload);
+
+  // 🔁 Rotate refresh token
+  user.refreshToken = newRefreshToken;
+  await user.save({ validateBeforeSave: false });
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+  };
 };
 
 export {
-    registerUser,
-    loginUser,
-    refreshAccessToken,
+  registerUser,
+  loginUser,
+  refreshAccessToken,
 };

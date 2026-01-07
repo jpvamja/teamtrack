@@ -1,21 +1,39 @@
 import validate from "../middlewares/validator.middleware.js";
+import asyncHandler from "../utils/asyncHandler.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
+
 import {
-    createOrganizationSchema,
-    inviteMemberSchema,
+  createOrganizationSchema,
+  inviteMemberSchema,
 } from "../modules/organization/organization.validation.js";
 
+import {
+  createOrganizationController,
+  inviteOrganizationMemberController,
+} from "../modules/organization/organization.controller.js";
+
+const router = Router();
+
+/**
+ * Create organization
+ * Any authenticated user can create an org
+ */
 router.post(
   "/",
   authMiddleware,
-  authorizeRoles(ROLES.OWNER),
   validate(createOrganizationSchema),
-  asyncHandler(createOrg)
+  asyncHandler(createOrganizationController)
 );
 
+/**
+ * Invite member to organization
+ * Org-level authorization handled in service
+ */
 router.post(
-  "/invite",
+  "/:orgId/invite",
   authMiddleware,
-  authorizeRoles(ROLES.OWNER, ROLES.ADMIN),
   validate(inviteMemberSchema),
-  asyncHandler(inviteOrgMember)
+  asyncHandler(inviteOrganizationMemberController)
 );
+
+export default router;

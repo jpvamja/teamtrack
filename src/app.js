@@ -12,31 +12,49 @@ const app = express();
 
 /**
  * =========================
+ * App config
+ * =========================
+ */
+app.set("trust proxy", 1); // required behind proxies
+
+/**
+ * =========================
  * Global Middlewares
  * =========================
  */
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
+/**
+ * CORS
+ */
 app.use(
-    cors({
-        origin: "*", // restrict in production if needed
-        credentials: true,
-    })
+  cors({
+    origin:
+      env.NODE_ENV === "production"
+        ? ["https://your-frontend.com"] // replace later
+        : "*",
+    credentials: env.NODE_ENV === "production",
+  })
 );
 
 app.use(helmet());
 
-app.use(
-    rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 100,
-        standardHeaders: true,
-        legacyHeaders: false,
-        message: "Too many requests, please try again later",
-    })
-);
+/**
+ * Global rate limiter
+ */
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
+app.use(globalLimiter);
+
+/**
+ * Request ID (after rate limiting)
+ */
 app.use(requestIdMiddleware);
 
 /**
@@ -49,7 +67,6 @@ app.use("/api/v1", routes);
 /**
  * =========================
  * Global Error Handler
- * (must be last)
  * =========================
  */
 app.use(errorHandler);
