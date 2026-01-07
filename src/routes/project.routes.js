@@ -1,4 +1,5 @@
 import express from "express";
+
 import asyncHandler from "../utils/asyncHandler.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorizeRoles from "../middlewares/role.middleware.js";
@@ -12,6 +13,16 @@ import {
 
 const router = express.Router();
 
+/**
+ * =========================
+ * Project Routes
+ * =========================
+ */
+
+/**
+ * Create project
+ * ADMIN & OWNER only
+ */
 router.post(
     "/",
     authMiddleware,
@@ -19,16 +30,22 @@ router.post(
     asyncHandler(createProjectController)
 );
 
-router.get(
-    "/:id",
-    authMiddleware,
-    asyncHandler(getProjectController)
-);
-
+/**
+ * List projects (by org / membership)
+ */
 router.get(
     "/",
     authMiddleware,
     asyncHandler(listProjectsController)
+);
+
+/**
+ * Get project by ID
+ */
+router.get(
+    "/:id",
+    authMiddleware,
+    asyncHandler(getProjectController)
 );
 
 export default router;

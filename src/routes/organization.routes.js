@@ -1,4 +1,5 @@
 import express from "express";
+
 import asyncHandler from "../utils/asyncHandler.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorizeRoles from "../middlewares/role.middleware.js";
@@ -12,6 +13,16 @@ import {
 
 const router = express.Router();
 
+/**
+ * =========================
+ * Organization Routes
+ * =========================
+ */
+
+/**
+ * Create organization
+ * Only OWNER can create org
+ */
 router.post(
     "/",
     authMiddleware,
@@ -19,12 +30,20 @@ router.post(
     asyncHandler(createOrg)
 );
 
+/**
+ * Get organization by ID
+ * Any authenticated member can view
+ */
 router.get(
     "/:id",
     authMiddleware,
     asyncHandler(getOrgById)
 );
 
+/**
+ * Invite member to organization
+ * OWNER & ADMIN allowed
+ */
 router.post(
     "/invite",
     authMiddleware,

@@ -1,20 +1,46 @@
 import express from "express";
-import {
-  createComment,
-  fetchCommentsByTask,
-} from "./comment.controller.js";
-import {
-  createCommentSchema,
-  getCommentsSchema,
-} from "./comment.validation.js";
-import authMiddleware from "../../middlewares/auth.middleware.js";
+
+import asyncHandler from "../utils/asyncHandler.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validator.middleware.js";
+
+import {
+    createComment,
+    fetchCommentsByTask,
+} from "../modules/comment/comment.controller.js";
+
+import {
+    createCommentSchema,
+    getCommentsSchema,
+} from "../modules/comment/comment.validation.js";
 
 const router = express.Router();
 
+/**
+ * =========================
+ * Comment Routes
+ * =========================
+ */
+
+// All comment routes require authentication
 router.use(authMiddleware);
 
-router.post("/", validate(createCommentSchema) , createComment);
-router.get("/", validate(getCommentsSchema , "query"), fetchCommentsByTask);
+/**
+ * Add comment to task
+ */
+router.post(
+    "/",
+    validate(createCommentSchema),
+    asyncHandler(createComment)
+);
+
+/**
+ * Get comments by task
+ */
+router.get(
+    "/",
+    validate(getCommentsSchema, "query"),
+    asyncHandler(fetchCommentsByTask)
+);
 
 export default router;
