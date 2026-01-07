@@ -18,7 +18,6 @@ const createOrg = async (req, res) => {
     );
 };
 
-
 const getOrgById = async (req, res) => {
     const organization = await getOrganizationById({
         orgId: req.params.id,

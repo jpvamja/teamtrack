@@ -1,54 +1,21 @@
-import express from "express";
-
-import asyncHandler from "../utils/asyncHandler.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-import authorizeRoles from "../middlewares/role.middleware.js";
-import ROLES from "../config/roles.js";
-
+import validate from "../middlewares/validator.middleware.js";
 import {
-    createOrg,
-    getOrgById,
-    inviteOrgMember,
-} from "../modules/organization/organization.controller.js";
+    createOrganizationSchema,
+    inviteMemberSchema,
+} from "../modules/organization/organization.validation.js";
 
-const router = express.Router();
-
-/**
- * =========================
- * Organization Routes
- * =========================
- */
-
-/**
- * Create organization
- * Only OWNER can create org
- */
 router.post(
-    "/",
-    authMiddleware,
-    authorizeRoles(ROLES.OWNER),
-    asyncHandler(createOrg)
+  "/",
+  authMiddleware,
+  authorizeRoles(ROLES.OWNER),
+  validate(createOrganizationSchema),
+  asyncHandler(createOrg)
 );
 
-/**
- * Get organization by ID
- * Any authenticated member can view
- */
-router.get(
-    "/:id",
-    authMiddleware,
-    asyncHandler(getOrgById)
-);
-
-/**
- * Invite member to organization
- * OWNER & ADMIN allowed
- */
 router.post(
-    "/invite",
-    authMiddleware,
-    authorizeRoles(ROLES.OWNER, ROLES.ADMIN),
-    asyncHandler(inviteOrgMember)
+  "/invite",
+  authMiddleware,
+  authorizeRoles(ROLES.OWNER, ROLES.ADMIN),
+  validate(inviteMemberSchema),
+  asyncHandler(inviteOrgMember)
 );
-
-export default router;

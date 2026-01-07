@@ -1,11 +1,8 @@
 import Organization from "./organization.model.js";
 import ApiError from "../../utils/apiError.js";
+import { isValidObjectId } from "../../utils/objectId.js";
 
 const createOrganization = async ({ name, userId }) => {
-    if (!name) {
-        throw ApiError.badRequest("Organization name is required");
-    }
-
     const organization = await Organization.create({
         name,
         owner: userId,
@@ -16,6 +13,10 @@ const createOrganization = async ({ name, userId }) => {
 };
 
 const getOrganizationById = async ({ orgId, userId }) => {
+    if (!isValidObjectId(orgId)) {
+        throw ApiError.badRequest("Invalid organization ID");
+    }
+
     const organization = await Organization.findById(orgId)
         .populate("owner", "name email")
         .populate("members", "name email");
@@ -29,20 +30,28 @@ const getOrganizationById = async ({ orgId, userId }) => {
     );
 
     if (!isMember) {
-        throw ApiError.forbidden("You are not a member of this organization");
+        throw ApiError.forbidden(
+            "You are not a member of this organization"
+        );
     }
 
     return organization;
 };
 
 const inviteMember = async ({ orgId, userId }) => {
+    if (!isValidObjectId(orgId) || !isValidObjectId(userId)) {
+        throw ApiError.badRequest("Invalid ID provided");
+    }
+
     const organization = await Organization.findById(orgId);
 
     if (!organization) {
         throw ApiError.notFound("Organization not found");
     }
 
-    const alreadyMember = organization.members.includes(userId);
+    const alreadyMember = organization.members.some(
+        (memberId) => memberId.toString() === userId
+    );
 
     if (alreadyMember) {
         throw ApiError.badRequest("User already a member");

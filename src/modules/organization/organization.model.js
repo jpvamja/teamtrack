@@ -6,12 +6,16 @@ const organizationSchema = new mongoose.Schema(
             type: String,
             required: [true, "Organization name is required"],
             trim: true,
+            minlength: 2,
+            maxlength: 100,
         },
+
         owner: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
+
         members: [
             {
                 type: mongoose.Schema.Types.ObjectId,
