@@ -7,12 +7,12 @@ class ApiError extends Error {
     ) {
         super(message);
 
-        this.statusCode = statusCode; // HTTP status code
-        this.message = message; // Error message
-        this.errors = errors; // Validation errors (if any)
-        this.success = false; // Always false for errors
+        this.name = "ApiError";
+        this.statusCode = statusCode;
+        this.success = false;
+        this.errors = errors;
 
-        // Capture stack trace (useful in dev)
+        // Capture stack trace
         if (stack) {
             this.stack = stack;
         } else {
@@ -20,33 +20,48 @@ class ApiError extends Error {
         }
     }
 
-    // Invalid client request (400)
+    /**
+     * 400 - Bad Request
+     */
     static badRequest(message = "Bad Request", errors = []) {
         return new ApiError(400, message, errors);
     }
 
-    // Unauthorized (401)
+    /**
+     * 401 - Unauthorized
+     */
     static unauthorized(message = "Unauthorized") {
         return new ApiError(401, message);
     }
 
-    // Forbidden (403)
+    /**
+     * 403 - Forbidden
+     */
     static forbidden(message = "Forbidden") {
         return new ApiError(403, message);
     }
 
-    // Not Found (404)
+    /**
+     * 404 - Not Found
+     */
     static notFound(message = "Not Found") {
         return new ApiError(404, message);
     }
 
-    // Internal Server Error (500)
+    /**
+     * 409 - Conflict
+     * (Very useful for duplicates, state conflicts)
+     */
+    static conflict(message = "Conflict") {
+        return new ApiError(409, message);
+    }
+
+    /**
+     * 500 - Internal Server Error
+     */
     static internal(message = "Internal Server Error") {
         return new ApiError(500, message);
     }
 }
 
 export default ApiError;
-
-// How to use
-// throw ApiError.notFound("User not found");

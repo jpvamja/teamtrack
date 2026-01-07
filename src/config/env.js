@@ -2,21 +2,32 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const required = ["PORT", "MONGO_URI", "JWT_SECRET"];
+/**
+ * Validate required environment variables at startup
+ * Fail fast instead of crashing later
+ */
+const requiredEnvVars = [
+    "PORT",
+    "MONGO_URI",
+    "JWT_SECRET",
+];
 
-required.forEach((key) => {
-  if (!process.env[key]) {
-    throw new Error(`Missing env variable: ${key}`);
-  }
+requiredEnvVars.forEach((key) => {
+    if (!process.env[key]) {
+        throw new Error(`❌ Missing required environment variable: ${key}`);
+    }
 });
 
 const env = {
-    PORT: process.env.PORT || 5000,
+    PORT: Number(process.env.PORT) || 5000,
     NODE_ENV: process.env.NODE_ENV || "development",
+
     MONGO_URI: process.env.MONGO_URI,
+
     JWT_SECRET: process.env.JWT_SECRET,
-    ACCESS_TOKEN_EXPIRY: process.env.ACCESS_TOKEN_EXPIRY,
-    REFRESH_TOKEN_EXPIRY: process.env.REFRESH_TOKEN_EXPIRY,
+
+    ACCESS_TOKEN_EXPIRY: process.env.ACCESS_TOKEN_EXPIRY || "15m",
+    REFRESH_TOKEN_EXPIRY: process.env.REFRESH_TOKEN_EXPIRY || "7d",
 };
 
 export default env;

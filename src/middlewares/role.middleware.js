@@ -1,17 +1,26 @@
 import ApiError from "../utils/apiError.js";
 
+/**
+ * Role-based authorization middleware
+ * @param  {...string} allowedRoles - Roles allowed to access the resource
+ */
 const authorizeRoles = (...allowedRoles) => {
-    return (req,res,next) => {
+    return (req, res, next) => {
+        // auth.middleware must run before this
         if (!req.user || !req.user.role) {
-            throw ApiError.unauthorized("User not authenticated")
+            return next(ApiError.unauthorized("User not authenticated"));
         }
 
         if (!allowedRoles.includes(req.user.role)) {
-            throw ApiError.forbidden("You do not have permission to access this resource");
+            return next(
+                ApiError.forbidden(
+                    "You do not have permission to access this resource"
+                )
+            );
         }
 
         next();
-    }
+    };
 };
 
 export default authorizeRoles;
