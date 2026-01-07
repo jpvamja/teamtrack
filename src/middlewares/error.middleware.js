@@ -1,4 +1,5 @@
 import ApiError from "../utils/apiError.js";
+import logger from "../utils/logger.js";
 
 const errorHandler = (err, req, res, next) => {
     let error = err;
@@ -31,6 +32,12 @@ const errorHandler = (err, req, res, next) => {
         }));
         error = ApiError.badRequest("Validation failed", errors);
     }
+
+    logger.error({
+        message: error.message,
+        statusCode: error.statusCode,
+        stack: error.stack,
+    });
 
     const response = {
         success: false,

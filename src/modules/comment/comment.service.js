@@ -2,6 +2,7 @@ import Comment from "./comment.model.js";
 import Task from "../task/task.model.js";
 import Project from "../project/project.model.js";
 import ApiError from "../../utils/apiError.js";
+import  getPagination  from "../../utils/pagination.js";
 
 export const addComment = async ({ content, taskId, userId }) => {
   const task = await Task.findById(taskId);
@@ -25,11 +26,13 @@ export const addComment = async ({ content, taskId, userId }) => {
   });
 };
 
-export const getCommentsByTask = async ({ taskId, userId }) => {
+export const getCommentsByTask = async ({ taskId, userId, query }) => {
   const task = await Task.findById(taskId);
   if (!task) {
     throw new ApiError(404, "Task not found");
   }
+
+  const { limit, skip } = getPagination(query);
 
   const project = await Project.findById(task.project);
   const isMember = project.members.some(
@@ -42,5 +45,7 @@ export const getCommentsByTask = async ({ taskId, userId }) => {
 
   return Comment.find({ task: taskId })
     .populate("author", "name email")
-    .sort({ createdAt: 1 });
+    .sort({ createdAt: 1 })
+    .skip(skip)
+    .limit(limit);
 };

@@ -1,25 +1,41 @@
 {
-    "name": "backend",
+    "name": "teamtrack-backend",
     "version": "1.0.0",
-    "description": "",
-    "main": "server.js",
+    "description": "TeamTrack backend API (Node.js, Express, MongoDB)",
+    "main": "src/server.js",
     "type": "module",
     "scripts": {
-        "dev": "nodemon src/server.js",
+        "dev": "nodemon --env-file .env src/server.js",
         "start": "node src/server.js",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
-        "lint": "eslint . "
+        "check": "npm run lint && npm run format -- --check"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "keywords": [
+        "nodejs",
+        "express",
+        "mongodb",
+        "backend",
+        "rest-api",
+        "teamtrack"
+    ],
+    "author": "Jeet Vamja",
+    "license": "MIT",
     "dependencies": {
         "bcrypt": "^6.0.0",
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",
         "express": "^5.2.1",
+        "express-rate-limit": "^8.2.1",
+        "helmet": "^8.1.0",
+        "joi": "^18.0.2",
         "jsonwebtoken": "^9.0.3",
-        "mongoose": "^9.1.1"
+        "mongoose": "^9.1.1",
+        "winston": "^3.19.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.39.2",
