@@ -22,25 +22,19 @@ const router = express.Router();
  * =========================
  */
 
-// All comment routes require authentication
-router.use(authMiddleware);
-
-/**
- * Add comment to task
- */
 router.post(
     "/",
+    authMiddleware,
     validate(createCommentSchema),
     asyncHandler(createComment)
 );
 
-/**
- * Get comments by task
- */
 router.get(
     "/",
+    authMiddleware,
     validate(getCommentsSchema, "query"),
     asyncHandler(fetchCommentsByTask)
 );
+
 
 export default router;

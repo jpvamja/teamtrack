@@ -1,34 +1,48 @@
-import asyncHandler from "../../utils/asyncHandler.js";
+import ApiResponse from "../../utils/apiResponse.js";
 import {
-  addComment,
-  getCommentsByTask,
+    addComment,
+    getCommentsByTask,
 } from "./comment.service.js";
 
-export const createComment = asyncHandler(async (req, res) => {
-  const { content, taskId } = req.body;
+/**
+ * Create comment
+ */
+const createComment = async (req, res) => {
+    const { content, taskId } = req.body;
 
-  const comment = await addComment({
-    content,
-    taskId,
-    userId: req.user._id,
-  });
+    const comment = await addComment({
+        content,
+        taskId,
+        userId: req.user.userId,
+    });
 
-  res.status(201).json({
-    success: true,
-    data: comment,
-  });
-});
+    return ApiResponse.created(
+        res,
+        comment,
+        "Comment added successfully"
+    );
+};
 
-export const fetchCommentsByTask = asyncHandler(async (req, res) => {
-  const { taskId } = req.query;
+/**
+ * Fetch comments by task
+ */
+const fetchCommentsByTask = async (req, res) => {
+    const { taskId } = req.query;
 
-  const comments = await getCommentsByTask({
-    taskId,
-    userId: req.user._id,
-  });
+    const comments = await getCommentsByTask({
+        taskId,
+        userId: req.user.userId,
+        query: req.query,
+    });
 
-  res.status(200).json({
-    success: true,
-    data: comments,
-  });
-});
+    return ApiResponse.success(
+        res,
+        comments,
+        "Comments fetched successfully"
+    );
+};
+
+export {
+    createComment,
+    fetchCommentsByTask,
+};

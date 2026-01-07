@@ -1,51 +1,89 @@
 import Comment from "./comment.model.js";
 import Task from "../task/task.model.js";
 import Project from "../project/project.model.js";
+import Organization from "../organization/organization.model.js";
 import ApiError from "../../utils/apiError.js";
-import  getPagination  from "../../utils/pagination.js";
+import { getPagination } from "../../utils/pagination.js";
+import { isValidObjectId } from "../../utils/objectId.js";
 
+/**
+ * Add comment to a task
+ */
 export const addComment = async ({ content, taskId, userId }) => {
-  const task = await Task.findById(taskId);
-  if (!task) {
-    throw new ApiError(404, "Task not found");
-  }
+    if (!isValidObjectId(taskId)) {
+        throw ApiError.badRequest("Invalid task ID");
+    }
 
-  const project = await Project.findById(task.project);
-  const isMember = project.members.some(
-    (m) => m.user.toString() === userId
-  );
+    const task = await Task.findById(taskId);
+    if (!task) {
+        throw ApiError.notFound("Task not found");
+    }
 
-  if (!isMember) {
-    throw new ApiError(403, "You are not allowed to comment on this task");
-  }
+    const project = await Project.findById(task.project);
+    if (!project) {
+        throw ApiError.notFound("Project not found");
+    }
 
-  return Comment.create({
-    content,
-    task: taskId,
-    author: userId,
-  });
+    const organization = await Organization.findById(project.organization);
+    if (!organization) {
+        throw ApiError.notFound("Organization not found");
+    }
+
+    const isMember = organization.members.some(
+        (memberId) => memberId.toString() === userId
+    );
+
+    if (!isMember) {
+        throw ApiError.forbidden(
+            "You are not allowed to comment on this task"
+        );
+    }
+
+    return Comment.create({
+        content,
+        task: taskId,
+        author: userId,
+    });
 };
 
+/**
+ * Get comments for a task (paginated)
+ */
 export const getCommentsByTask = async ({ taskId, userId, query }) => {
-  const task = await Task.findById(taskId);
-  if (!task) {
-    throw new ApiError(404, "Task not found");
-  }
+    if (!isValidObjectId(taskId)) {
+        throw ApiError.badRequest("Invalid task ID");
+    }
 
-  const { limit, skip } = getPagination(query);
+    const task = await Task.findById(taskId);
+    if (!task) {
+        throw ApiError.notFound("Task not found");
+    }
 
-  const project = await Project.findById(task.project);
-  const isMember = project.members.some(
-    (m) => m.user.toString() === userId
-  );
+    const project = await Project.findById(task.project);
+    if (!project) {
+        throw ApiError.notFound("Project not found");
+    }
 
-  if (!isMember) {
-    throw new ApiError(403, "You are not allowed to view comments");
-  }
+    const organization = await Organization.findById(project.organization);
+    if (!organization) {
+        throw ApiError.notFound("Organization not found");
+    }
 
-  return Comment.find({ task: taskId })
-    .populate("author", "name email")
-    .sort({ createdAt: 1 })
-    .skip(skip)
-    .limit(limit);
+    const isMember = organization.members.some(
+        (memberId) => memberId.toString() === userId
+    );
+
+    if (!isMember) {
+        throw ApiError.forbidden(
+            "You are not allowed to view comments"
+        );
+    }
+
+    const { limit, skip } = getPagination(query);
+
+    return Comment.find({ task: taskId })
+        .populate("author", "name email")
+        .sort({ createdAt: 1 })
+        .skip(skip)
+        .limit(limit);
 };
