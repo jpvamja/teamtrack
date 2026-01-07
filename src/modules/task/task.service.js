@@ -1,14 +1,34 @@
 import Task from "./task.model.js";
 import Project from "../project/project.model.js";
 import ApiError from "../../utils/apiError.js";
+import { isValidObjectId } from "../../utils/objectId.js";
+import { TASK_STATUS } from "../../config/constants.js";
 
+/**
+ * Allowed task status transitions
+ */
 const VALID_TRANSITIONS = {
-    TODO: ["IN_PROGRESS"],
-    IN_PROGRESS: ["DONE"],
-    DONE: [],
+    [TASK_STATUS.TODO]: [TASK_STATUS.IN_PROGRESS],
+    [TASK_STATUS.IN_PROGRESS]: [TASK_STATUS.DONE],
+    [TASK_STATUS.DONE]: [],
 };
 
-const createTask = async ({ title, description, priority, dueDate, projectId, assignee, user }) => {
+/**
+ * Create task
+ */
+const createTask = async ({
+    title,
+    description,
+    priority,
+    dueDate,
+    projectId,
+    assigneeId,
+    userId,
+}) => {
+    if (!isValidObjectId(projectId)) {
+        throw ApiError.badRequest("Invalid project ID");
+    }
+
     const project = await Project.findById(projectId).populate("organization");
 
     if (!project) {
@@ -16,7 +36,7 @@ const createTask = async ({ title, description, priority, dueDate, projectId, as
     }
 
     const isMember = project.organization.members.some(
-        (member) => member.toString() === user.userId
+        (memberId) => memberId.toString() === userId
     );
 
     if (!isMember) {
@@ -29,21 +49,33 @@ const createTask = async ({ title, description, priority, dueDate, projectId, as
         priority,
         dueDate,
         project: projectId,
-        assignee,
-        createdBy: user.userId,
+        assignee: assigneeId,
+        createdBy: userId,
     });
 };
 
+/**
+ * Get task by ID
+ */
 const getTaskById = async ({ taskId, userId }) => {
+    if (!isValidObjectId(taskId)) {
+        throw ApiError.badRequest("Invalid task ID");
+    }
+
     const task = await Task.findById(taskId)
-        .populate("project")
+        .populate({
+            path: "project",
+            populate: { path: "organization" },
+        })
         .populate("assignee", "name email");
 
     if (!task) {
         throw ApiError.notFound("Task not found");
     }
 
-    const isMember = task.project.organization.members.includes(userId);
+    const isMember = task.project.organization.members.some(
+        (memberId) => memberId.toString() === userId
+    );
 
     if (!isMember) {
         throw ApiError.forbidden("Access denied");
@@ -52,7 +84,14 @@ const getTaskById = async ({ taskId, userId }) => {
     return task;
 };
 
-const updateTask = async ({ taskId, updates, user }) => {
+/**
+ * Update task
+ */
+const updateTask = async ({ taskId, updates, userId, role }) => {
+    if (!isValidObjectId(taskId)) {
+        throw ApiError.badRequest("Invalid task ID");
+    }
+
     const task = await Task.findById(taskId).populate({
         path: "project",
         populate: { path: "organization" },
@@ -63,7 +102,7 @@ const updateTask = async ({ taskId, updates, user }) => {
     }
 
     const isMember = task.project.organization.members.some(
-        (m) => m.toString() === user.userId
+        (memberId) => memberId.toString() === userId
     );
 
     if (!isMember) {
@@ -71,11 +110,11 @@ const updateTask = async ({ taskId, updates, user }) => {
     }
 
     // Status update → assignee only
-    if (updates.status && task.assignee?.toString() !== user.userId) {
+    if (updates.status && task.assignee?.toString() !== userId) {
         throw ApiError.forbidden("Only assignee can update status");
     }
 
-    // Validate status transitions
+    // Validate status transition
     if (updates.status) {
         const allowed = VALID_TRANSITIONS[task.status];
         if (!allowed.includes(updates.status)) {
@@ -84,7 +123,7 @@ const updateTask = async ({ taskId, updates, user }) => {
     }
 
     // Reassign task → ADMIN / OWNER only
-    if (updates.assignee && !["ADMIN", "OWNER"].includes(user.role)) {
+    if (updates.assignee && !["ADMIN", "OWNER"].includes(role)) {
         throw ApiError.forbidden("Only ADMIN or OWNER can reassign tasks");
     }
 
@@ -94,7 +133,14 @@ const updateTask = async ({ taskId, updates, user }) => {
     return task;
 };
 
-const deleteTask = async ({ taskId, user }) => {
+/**
+ * Delete task
+ */
+const deleteTask = async ({ taskId, userId, role }) => {
+    if (!isValidObjectId(taskId)) {
+        throw ApiError.badRequest("Invalid task ID");
+    }
+
     const task = await Task.findById(taskId).populate({
         path: "project",
         populate: { path: "organization" },
@@ -104,7 +150,15 @@ const deleteTask = async ({ taskId, user }) => {
         throw ApiError.notFound("Task not found");
     }
 
-    if (!["ADMIN", "OWNER"].includes(user.role)) {
+    const isMember = task.project.organization.members.some(
+        (memberId) => memberId.toString() === userId
+    );
+
+    if (!isMember) {
+        throw ApiError.forbidden("Access denied");
+    }
+
+    if (!["ADMIN", "OWNER"].includes(role)) {
         throw ApiError.forbidden("Only ADMIN or OWNER can delete tasks");
     }
 

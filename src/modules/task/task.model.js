@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
-
-const TASK_STATUS = ["TODO", "IN_PROGRESS", "DONE"];
-const TASK_PRIORITY = ["LOW", "MEDIUM", "HIGH"];
+import { TASK_STATUS, TASK_PRIORITY } from "../../config/constants.js";
 
 const taskSchema = new mongoose.Schema(
     {
@@ -9,21 +7,28 @@ const taskSchema = new mongoose.Schema(
             type: String,
             required: [true, "Task title is required"],
             trim: true,
+            minlength: 2,
+            maxlength: 200,
         },
+
         description: {
             type: String,
             trim: true,
+            maxlength: 1000,
         },
+
         status: {
             type: String,
-            enum: TASK_STATUS,
-            default: "TODO",
+            enum: Object.values(TASK_STATUS),
+            default: TASK_STATUS.TODO,
         },
+
         priority: {
             type: String,
-            enum: TASK_PRIORITY,
-            default: "MEDIUM",
+            enum: Object.values(TASK_PRIORITY),
+            default: TASK_PRIORITY.MEDIUM,
         },
+
         dueDate: {
             type: Date,
             validate: {
@@ -33,15 +38,19 @@ const taskSchema = new mongoose.Schema(
                 message: "Due date must be in the future",
             },
         },
+
         project: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Project",
             required: true,
+            index: true,
         },
+
         assignee: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
         },
+
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
