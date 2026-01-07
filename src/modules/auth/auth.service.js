@@ -1,7 +1,14 @@
 import User from "../user/user.model.js";
 import ApiError from "../../utils/apiError.js";
-import { signAccessToken, signRefreshToken, verifyToken } from "../../utils/jwt.js";
+import {
+    signAccessToken,
+    signRefreshToken,
+    verifyToken,
+} from "../../utils/jwt.js";
 
+/**
+ * Register user
+ */
 const registerUser = async ({ name, email, password }) => {
     const existingUser = await User.findOne({ email });
 
@@ -21,6 +28,9 @@ const registerUser = async ({ name, email, password }) => {
     return userObj;
 };
 
+/**
+ * Login user
+ */
 const loginUser = async ({ email, password }) => {
     const user = await User.findOne({ email }).select("+password");
 
@@ -52,29 +62,24 @@ const loginUser = async ({ email, password }) => {
     };
 };
 
-const refreshAccessToken = async (refreshToken)=>{
-    if (!refreshToken) {
-        throw ApiError.badRequest("Refresh token is required");
-    }
-
-    let decoded;
-
-    try {
-        decoded = verifyToken(refreshToken);
-    } catch (error) {
-        throw ApiError.unauthorized("Invalid or expired refresh token");
-    }
+/**
+ * Refresh access token
+ */
+const refreshAccessToken = async (refreshToken) => {
+    const decoded = verifyToken(refreshToken);
 
     const payload = {
         userId: decoded.userId,
         role: decoded.role,
     };
 
-    const newAccessToken = signAccessToken(payload);
-
     return {
-        accessToken: newAccessToken,
+        accessToken: signAccessToken(payload),
     };
-}
+};
 
-export { registerUser, loginUser, refreshAccessToken };
+export {
+    registerUser,
+    loginUser,
+    refreshAccessToken,
+};

@@ -1,25 +1,24 @@
-import express from "express";
-
-import asyncHandler from "../utils/asyncHandler.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-
+import validate from "../middlewares/validator.middleware.js";
 import {
-    register,
-    login,
-    logout,
-    refresh,
-} from "../modules/auth/auth.controller.js";
+    registerSchema,
+    loginSchema,
+    refreshSchema,
+} from "../modules/auth/auth.validation.js";
 
-const router = express.Router();
+router.post(
+  "/register",
+  validate(registerSchema),
+  asyncHandler(register)
+);
 
-/**
- * =========================
- * Auth Routes
- * =========================
- */
-router.post("/register", asyncHandler(register));
-router.post("/login", asyncHandler(login));
-router.post("/refresh", asyncHandler(refresh));
-router.post("/logout", authMiddleware, asyncHandler(logout));
+router.post(
+  "/login",
+  validate(loginSchema),
+  asyncHandler(login)
+);
 
-export default router;
+router.post(
+  "/refresh",
+  validate(refreshSchema),
+  asyncHandler(refresh)
+);
